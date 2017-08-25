@@ -21,9 +21,9 @@ function [VCD] = vectorCDWrap_M(X_h)
 
     VCD = vectorCD_M(DT, DT1, DT2 ,X_h,X_ort);
 
-    end
+end
 
-    function [VCD] = vectorCD_M(DT, DT1, DT2 ,X_h,X_ort)
+function [VCD] = vectorCD_M(DT, DT1, DT2 ,X_h,X_ort)
     X_oi = makeObs(X_h,X_ort);
 
     VCD = vectorCDSum_M(DT, DT1, DT2,X_oi);

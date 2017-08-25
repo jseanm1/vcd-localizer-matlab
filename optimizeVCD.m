@@ -1,4 +1,4 @@
-function [X_opt, jacobian] = optimizeVCD(init_pt, Scan_k, ang, conf)
+function [X_opt, cov_Xr] = optimizeVCD(init_pt, Scan_k, ang, conf)
 
     global X_ort;
 
@@ -6,7 +6,7 @@ function [X_opt, jacobian] = optimizeVCD(init_pt, Scan_k, ang, conf)
     X_ort = gate_laser(init_pt,X_ort);
 
     [X_opt,resnorm,residual,exitflag,output,lambda,jacobian] = lsqnonlin(@VCDFunWrap, init_pt);
-
+    cov_Xr = calcUncertainty(X_ort, X_opt);
 end
 
 %% Gate to get rid of outliers
