@@ -1,6 +1,10 @@
 % clear all
 close all
 
+type = 0;
+% 0. Localizer
+% 1. Monte Carlo
+
 dataset_sel = 2;
 % 1. CAS dataset
 % 2. Intel Dataset
@@ -26,6 +30,7 @@ switch dataset_sel
   case 1
     load CAS_map;
     map = imcomplement(im2bw(map_final));
+    conf.map_resolution = 0.05;
     conf.laser_reading_max = 20;
     conf.laser_reading_min = 2;
 
@@ -145,33 +150,68 @@ switch dataset_sel
         
 end
 
-%% Run VCD-localizer
-Pose = pose';
+if type == 0
+    %% Run VCD-localizer
+    Pose = pose';
 
-for i = conf.start_index:n_scans
-    
-    if conf.skip_it~=1 % Skip scans default 2 because the otherone is used to make the map
-        if(mod(i,conf.skip_it)~=0)
-        continue;
+    for i = conf.start_index:n_scans
+
+        if conf.skip_it~=1 % Skip scans default 2 because the otherone is used to make the map
+            if(mod(i,conf.skip_it)~=0)
+            continue;
+            end
         end
+
+        Scan_k = laser(i, :) ;
+
+        % Calculate velocity
+        if exist('odom')
+        u_k = [ sqrt( (odom(i,1)-odom(i-conf.skip_it,1))^2 + (odom(i,2)-odom(i-conf.skip_it,2))^2 )   odom(i,3)-odom(i-conf.skip_it,3)];
+        else
+        u_k = [0.0 0.0];
+        end
+
+        X_CDin = Pose(end,:) + [-u_k(1)*sin(Pose(end,3)) u_k(1)*cos(Pose(end,3)) -u_k(2)];
+        [tp_2, cov_Xr] = optimizeVCD(X_CDin', Scan_k, ang, conf); % Optimizer
+        tp_2
+        cov_Xr
+        sqrt(cov_Xr)
+
+        if mod(i,1)==0
+          draw_laser(tp_2,[Scan_k;ang],conf,[0 0 1]);
+        end
+        Pose(end+1,:)= tp_2'; 
     end
-
-    Scan_k = laser(i, :) ;
-
-    % Calculate velocity
-    if exist('odom')
-    u_k = [ sqrt( (odom(i,1)-odom(i-conf.skip_it,1))^2 + (odom(i,2)-odom(i-conf.skip_it,2))^2 )   odom(i,3)-odom(i-conf.skip_it,3)];
-    else
-    u_k = [0.0 0.0];
-    end
-
-    X_CDin = Pose(end,:) + [-u_k(1)*sin(Pose(end,3)) u_k(1)*cos(Pose(end,3)) -u_k(2)];
-    [tp_2, cov_Xr] = optimizeVCD(X_CDin', Scan_k, ang, conf); % Optimizer
-    tp_2
-    cov_Xr
-
-    if mod(i,50)==0
-      draw_laser(tp_2,[Scan_k;ang],conf,[0 0 1]);
-    end
-    Pose(end+1,:)= tp_2'; 
+else
+   %% Run Monte Carlo
+   iterations = 100000;
+   sigma = 0.02;
+   
+   pose75 = zeros(iterations, 3);
+   pose750 = zeros(iterations, 3);
+   
+   initGuess75 = [26.1926678977323; 21.6522428977820; -1.57131998766469];
+   initGuess750 = [39.1852750940015; 34.8938337056028; -6.20687660689260];
+   
+   Scan_k = laser(75,:);
+   for i=1:iterations
+       randScan = normrnd(Scan_k, sigma);
+       [tp_2] = optimizeVCD(initGuess75, randScan, ang, conf); % Optimizer
+       pose75(i,:) = tp_2';       
+   end
+   
+   [tp_75, cov_Xr75] = optimizeVCD(initGuess75, Scan_k, ang, conf); % Optimizer
+   tp_75
+   cov_Xr75
+   
+   Scan_k = laser(750,:);
+   for i=1:iterations
+       randScan = normrnd(Scan_k, sigma);
+       [tp_2] = optimizeVCD(initGuess750, randScan, ang, conf); % Optimizer
+       pose750(i,:) = tp_2';       
+   end
+   
+   [tp_750, cov_Xr750] = optimizeVCD(initGuess750, Scan_k, ang, conf); % Optimizer
+   tp_750
+   cov_Xr750
 end

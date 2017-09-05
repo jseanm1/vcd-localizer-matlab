@@ -27,6 +27,6 @@ function CD = vectorCDSum_M(DT, DT1, DT2, X_oi)
 
     end
 
-    CD = sum_CD1 + sum_CD2;
+    CD = [sum_CD1; sum_CD2];
 
 end
