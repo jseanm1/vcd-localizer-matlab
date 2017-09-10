@@ -1,6 +1,6 @@
 clear all
 
-map = im2bw(imcomplement(imread('circle.jpg')));
+map = im2bw(imcomplement(imread('x.jpg')));
 imshow(map)
 resolution = 0.05;
 

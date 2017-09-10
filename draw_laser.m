@@ -12,12 +12,12 @@ function draw_laser(X_h,laser_scan, conf, mcolor)
        robothan = plot(lasermap,0,0,'g.') ;
        set(robothan , 'MarkerSize', 20);
        laserhan = plot(lasermap,0,0,'g.') ;
-       set(laserhan , 'color', mcolor, 'MarkerSize', 6);
+       set(laserhan , 'color', mcolor, 'MarkerSize', 3);
        draw_init = 1;
 
      end
 
-    laser_scan = laser_read(laser_scan, conf);  % really useful?
+%     laser_scan = laser_read(laser_scan, conf);  % really useful?
 
     laser_scan(1,:) = laser_scan(1,:) / conf.map_resolution;
     X_h(1) = X_h(1) / conf.map_resolution;

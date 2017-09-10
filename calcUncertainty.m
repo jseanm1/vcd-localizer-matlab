@@ -9,6 +9,7 @@ function [cov_Xr] = calcUncertainty(X_ort, X_opt)
     global DT1_dy2obj;
     global DT2_dx2obj;
     global DT2_dy2obj;
+    global sensorCov;
     
     [m,n] = size(X_ort);
     X_o = tfX_ort(X_ort, X_opt, n);
@@ -17,28 +18,28 @@ function [cov_Xr] = calcUncertainty(X_ort, X_opt)
     A = zeros(3,n);
 
     % Set H
-    H(1,1) = getd2vcd_dxr2(DTobj1, DTobj2, DT1_dxobj, DT2_dxobj, DT1_dx2obj, DT2_dx2obj, X_o, n);
-    H(1,2) = getd2vcd_dxrdyr(DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, X_o, n);
-    H(1,3) = getd2vcd_dxrdphir(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, DT1_dx2obj, DT2_dx2obj, X_ort, X_opt, X_o, n);
-    H(2,2) = getd2vcd_dyr2(DTobj1, DTobj2, DT1_dyobj, DT2_dyobj, DT1_dy2obj, DT2_dy2obj, X_o, n);
-    H(2,3) = getd2vcd_dyrdphir(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, DT1_dy2obj, DT2_dy2obj, X_ort, X_opt, X_o, n);
-    H(3,3) = getd2vcd_dphir2(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, DT1_dx2obj, DT1_dy2obj, DT2_dx2obj, DT2_dy2obj, X_ort, X_opt, X_o, n);
+    H(1,1) = n*getd2vcd_dxr2(DTobj1, DTobj2, DT1_dxobj, DT2_dxobj, DT1_dx2obj, DT2_dx2obj, X_o, n);
+    H(1,2) = n*getd2vcd_dxrdyr(DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, X_o, n);
+    H(1,3) = n*getd2vcd_dxrdphir(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, DT1_dx2obj, DT2_dx2obj, X_ort, X_opt, X_o, n);
+    H(2,2) = n*getd2vcd_dyr2(DTobj1, DTobj2, DT1_dyobj, DT2_dyobj, DT1_dy2obj, DT2_dy2obj, X_o, n);
+    H(2,3) = n*getd2vcd_dyrdphir(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, DT1_dy2obj, DT2_dy2obj, X_ort, X_opt, X_o, n);
+    H(3,3) = n*getd2vcd_dphir2(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, DT1_dx2obj, DT1_dy2obj, DT2_dx2obj, DT2_dy2obj, X_ort, X_opt, X_o, n);
 
     H(2,1) = H(1,2);
     H(3,1) = H(1,3);
     H(3,2) = H(3,3);
 
     % Set A
-    A(1,:) = getd2vcd_dxrdr(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, DT1_dx2obj, DT2_dx2obj, X_ort, X_opt, X_o, n);
-    A(2,:) = getd2vcd_dyrdr(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, DT1_dy2obj, DT2_dy2obj, X_ort, X_opt, X_o, n);
-    A(3,:) = getd2vcd_dphirdr(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, DT1_dx2obj, DT1_dy2obj, DT2_dx2obj, DT2_dy2obj, X_ort, X_opt, X_o, n);        
+    A(1,:) = n*getd2vcd_dxrdr(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, DT1_dx2obj, DT2_dx2obj, X_ort, X_opt, X_o, n);
+    A(2,:) = n*getd2vcd_dyrdr(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, DT1_dy2obj, DT2_dy2obj, X_ort, X_opt, X_o, n);
+    A(3,:) = n*getd2vcd_dphirdr(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, DT1_dx2obj, DT1_dy2obj, DT2_dx2obj, DT2_dy2obj, X_ort, X_opt, X_o, n);
 
     % Set J = H-1 * A
     J = -inv(H) * A;
-
-    % Set sensor cov
-    cov_Srt = 0.0004 * cov_Srt;
     
+    % Set sensor cov
+    cov_Srt = sensorCov * cov_Srt;
+
     % Set cov_Xr
     cov_Xr = J * cov_Srt * J';
     
