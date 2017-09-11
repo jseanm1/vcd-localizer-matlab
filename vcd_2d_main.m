@@ -105,7 +105,7 @@ for i = 1:m
             end
 
             DT1(i,j) = (col - j).*conf.map_resolution;
-            DT2(i,j) = (i - row).*conf.map_resolution;
+            DT2(i,j) = (row - i).*conf.map_resolution;
         end
     end
 end

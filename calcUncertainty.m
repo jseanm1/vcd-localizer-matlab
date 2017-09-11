@@ -18,21 +18,21 @@ function [cov_Xr] = calcUncertainty(X_ort, X_opt)
     A = zeros(3,n);
 
     % Set H
-    H(1,1) = n*getd2vcd_dxr2(DTobj1, DTobj2, DT1_dxobj, DT2_dxobj, DT1_dx2obj, DT2_dx2obj, X_o, n);
-    H(1,2) = n*getd2vcd_dxrdyr(DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, X_o, n);
-    H(1,3) = n*getd2vcd_dxrdphir(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, DT1_dx2obj, DT2_dx2obj, X_ort, X_opt, X_o, n);
-    H(2,2) = n*getd2vcd_dyr2(DTobj1, DTobj2, DT1_dyobj, DT2_dyobj, DT1_dy2obj, DT2_dy2obj, X_o, n);
-    H(2,3) = n*getd2vcd_dyrdphir(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, DT1_dy2obj, DT2_dy2obj, X_ort, X_opt, X_o, n);
-    H(3,3) = n*getd2vcd_dphir2(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, DT1_dx2obj, DT1_dy2obj, DT2_dx2obj, DT2_dy2obj, X_ort, X_opt, X_o, n);
+    H(1,1) = getd2vcd_dxr2(DTobj1, DTobj2, DT1_dxobj, DT2_dxobj, DT1_dx2obj, DT2_dx2obj, X_o, n);
+    H(1,2) = getd2vcd_dxrdyr(DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, X_o, n);
+    H(1,3) = getd2vcd_dxrdphir(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, DT1_dx2obj, DT2_dx2obj, X_ort, X_opt, X_o, n);
+    H(2,2) = getd2vcd_dyr2(DTobj1, DTobj2, DT1_dyobj, DT2_dyobj, DT1_dy2obj, DT2_dy2obj, X_o, n);
+    H(2,3) = getd2vcd_dyrdphir(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, DT1_dy2obj, DT2_dy2obj, X_ort, X_opt, X_o, n);
+    H(3,3) = getd2vcd_dphir2(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, DT1_dx2obj, DT1_dy2obj, DT2_dx2obj, DT2_dy2obj, X_ort, X_opt, X_o, n);
 
     H(2,1) = H(1,2);
     H(3,1) = H(1,3);
-    H(3,2) = H(3,3);
+    H(3,2) = H(2,3);
 
     % Set A
-    A(1,:) = n*getd2vcd_dxrdr(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, DT1_dx2obj, DT2_dx2obj, X_ort, X_opt, X_o, n);
-    A(2,:) = n*getd2vcd_dyrdr(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, DT1_dy2obj, DT2_dy2obj, X_ort, X_opt, X_o, n);
-    A(3,:) = n*getd2vcd_dphirdr(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, DT1_dx2obj, DT1_dy2obj, DT2_dx2obj, DT2_dy2obj, X_ort, X_opt, X_o, n);
+    A(1,:) = getd2vcd_dxrdr(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, DT1_dx2obj, DT2_dx2obj, X_ort, X_opt, X_o, n);
+    A(2,:) = getd2vcd_dyrdr(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, DT1_dy2obj, DT2_dy2obj, X_ort, X_opt, X_o, n);
+    A(3,:) = getd2vcd_dphirdr(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, DT1_dx2obj, DT1_dy2obj, DT2_dx2obj, DT2_dy2obj, X_ort, X_opt, X_o, n);
 
     % Set J = H-1 * A
     J = -inv(H) * A;
@@ -61,7 +61,7 @@ function [d2vcd_dxr2] = getd2vcd_dxr2(DTobj1, DTobj2, DT1_dxobj, DT2_dxobj, DT1_
         d2vcd_dxr2 = d2vcd_dxr2 + (DT1_dxobj(y,x)^2 + (DTobj1(y,x)*DT1_dx2obj(y,x)) + DT2_dxobj(y,x)^2 + (DTobj2(y,x)*DT2_dx2obj(y,x)));
     end
     
-    d2vcd_dxr2 = (2/n) * d2vcd_dxr2;
+    d2vcd_dxr2 = 2 * d2vcd_dxr2;
 end
 
 function [d2vcd_dxrdyr] = getd2vcd_dxrdyr(DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, X_o, n)
@@ -73,7 +73,7 @@ function [d2vcd_dxrdyr] = getd2vcd_dxrdyr(DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_d
         d2vcd_dxrdyr = d2vcd_dxrdyr + ((DT1_dxobj(y,x)*DT1_dyobj(y,x)) + (DT2_dxobj(y,x)*DT2_dyobj(y,x)));
     end
     
-    d2vcd_dxrdyr = (2/n) * d2vcd_dxrdyr;
+    d2vcd_dxrdyr = 2 * d2vcd_dxrdyr;
 end
 
 function [d2vcd_dxrdphir] = getd2vcd_dxrdphir(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, DT1_dx2obj, DT2_dx2obj, X_ort, X_opt, X_o, n)
@@ -94,7 +94,7 @@ function [d2vcd_dxrdphir] = getd2vcd_dxrdphir(DTobj1, DTobj2, DT1_dxobj, DT1_dyo
         d2vcd_dxrdphir = d2vcd_dxrdphir  + (r * (comp1+comp2+comp3+comp4));
     end
     
-    d2vcd_dxrdphir = (-2/n) * d2vcd_dxrdphir;
+    d2vcd_dxrdphir = -2 * d2vcd_dxrdphir;
 end
 
 function [d2vcd_dyr2] = getd2vcd_dyr2(DTobj1, DTobj2, DT1_dyobj, DT2_dyobj, DT1_dy2obj, DT2_dy2obj, X_o, n)
@@ -106,7 +106,7 @@ function [d2vcd_dyr2] = getd2vcd_dyr2(DTobj1, DTobj2, DT1_dyobj, DT2_dyobj, DT1_
         d2vcd_dyr2 = d2vcd_dyr2 + (DT1_dyobj(y,x)^2 + (DTobj1(y,x)*DT1_dy2obj(y,x)) + DT2_dyobj(y,x)^2 + (DTobj2(y,x)*DT2_dy2obj(y,x)));
     end
     
-    d2vcd_dyr2 = (2/n) * d2vcd_dyr2;
+    d2vcd_dyr2 = 2 * d2vcd_dyr2;
 end
 
 function [d2vcd_dyrdphir] = getd2vcd_dyrdphir(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, DT1_dy2obj, DT2_dy2obj, X_ort, X_opt, X_o, n)
@@ -127,7 +127,7 @@ function [d2vcd_dyrdphir] = getd2vcd_dyrdphir(DTobj1, DTobj2, DT1_dxobj, DT1_dyo
         d2vcd_dyrdphir = d2vcd_dyrdphir + (r * (comp1-comp2+comp3-comp4));
     end
     
-    d2vcd_dyrdphir = (-2/n) * d2vcd_dyrdphir;
+    d2vcd_dyrdphir = -2 * d2vcd_dyrdphir;
 end
 
 function [d2vcd_dphir2] = getd2vcd_dphir2(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, DT1_dx2obj, DT1_dy2obj, DT2_dx2obj, DT2_dy2obj, X_ort, X_opt, X_o, n)
@@ -148,7 +148,7 @@ function [d2vcd_dphir2] = getd2vcd_dphir2(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, 
         d2vcd_dphir2 = d2vcd_dphir2 + (r * (comp1+comp2+comp3+comp4));
     end
     
-    d2vcd_dphir2 = (2/n) * d2vcd_dphir2;
+    d2vcd_dphir2 = 2 * d2vcd_dphir2;
 end
 
 function [d2vcd_dxrdr] = getd2vcd_dxrdr(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, DT1_dx2obj, DT2_dx2obj, X_ort, X_opt, X_o, n)
@@ -165,7 +165,7 @@ function [d2vcd_dxrdr] = getd2vcd_dxrdr(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT
         comp3 = DT2_dxobj(y,x) * (DT2_dxobj(y,x)*s + DT2_dyobj(y,x)*c);
         comp4 = DTobj2(y,x) * DT2_dx2obj(y,x) * s;
         
-        d2vcd_dxrdr(1,i) = (2/n) * (comp1+comp2+comp3+comp4);        
+        d2vcd_dxrdr(1,i) = 2 * (comp1+comp2+comp3+comp4);        
     end
 end
 
@@ -183,7 +183,7 @@ function [d2vcd_dyrdr] = getd2vcd_dyrdr(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT
         comp3 = DT2_dyobj(y,x) * (DT2_dxobj(y,x)*s + DT2_dyobj(y,x)*c);
         comp4 = DTobj2(y,x) * DT2_dy2obj(y,x) * c;
         
-        d2vcd_dyrdr(1,i) = (2/n) * (comp1+comp2+comp3+comp4);
+        d2vcd_dyrdr(1,i) = 2 * (comp1+comp2+comp3+comp4);
     end
 end
 
@@ -204,6 +204,6 @@ function [d2vcd_dphirdr] = getd2vcd_dphirdr(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj
         comp5 = (DT2_dxobj(y,x)*s + DT2_dyobj(y,x)*c) * (DT2_dxobj(y,x)*c - DT2_dyobj(y,x)*s);
         comp6 = DTobj2(y,x) * (DT2_dx2obj(y,x)*s*c - DT2_dy2obj(y,x)*c*s);
         
-        d2vcd_dphirdr(1,i) = (-2/n) * (comp1 + comp2 + r*(comp3 + comp4 + comp5 + comp6));        
+        d2vcd_dphirdr(1,i) = -2 * (comp1 + comp2 + r*(comp3 + comp4 + comp5 + comp6));        
     end
 end
