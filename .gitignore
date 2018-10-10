@@ -1,0 +1,9 @@
+*.*~
+*.mat
+*.jpg
+*.png
+*.bag
+*.tar.gz
+*.zip
+hospital_dataset/*
+

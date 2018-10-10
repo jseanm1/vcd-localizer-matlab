@@ -25,7 +25,8 @@ end
 
 function [VCD] = vectorCD_M(DT, DT1, DT2 ,X_h,X_ort)
     X_oi = makeObs(X_h,X_ort);
-
+    X_h;
     VCD = vectorCDSum_M(DT, DT1, DT2,X_oi);
+%     VCD = vectorApproxSum(X_oi);
 
 end

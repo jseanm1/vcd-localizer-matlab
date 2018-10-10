@@ -5,16 +5,32 @@ type = 0;
 % 0. Localizer
 % 1. Monte Carlo
 
-dataset_sel = 2;
+dataset_sel = 10;
 % 1. CAS dataset
 % 2. Intel Dataset
 % 3. JFR Simulations
 % 4. Hospital Dataset
+% 5. Kentland Dataset
+% 6. PR2 Dataset
+% 7. Intel Padded
+% 8. Intel partial1
+% 9. Intel partial3
+% 10. CAS LAB 404
 
 %% Load Map
 global map;
 global conf;
 global sensorCov;
+
+global t_optimizer;
+global t_cov;
+
+global observations;
+
+observations = {};
+
+t_optimizer = [];
+t_cov = [];
 
 switch dataset_sel
   case 1
@@ -34,22 +50,67 @@ switch dataset_sel
     
   case 3
     % JFR
-    sensorCov = 0.5^2;
-    load jfr_data
-    jfr_process_scans
+    sensorCov = 0.75^2;
+%     load jfr_data
+%     jfr_load_data
+%     jfr_process_scans
 %     map = flip(map);
+%     load icra_jfr_dataset3_localized;
     conf.map_resolution = 0.05;
     conf.map_size = size(map).*conf.map_resolution;
     conf.laser_reading_max = 30;
     conf.laser_reading_min = .5;
     
   case 4
+    sensorCov = 0.2^2;
     map_final = imread('hospital_section_l.png');
     map = imcomplement(im2bw(map_final));
     conf.laser_reading_max = 4.8;
     conf.laser_reading_min = .1;
     load hospital_test4_02_ws
-    conf.map_resolution = 0.02; %Map resolution
+    conf.map_resolution = 0.05; %Map resolution
+    
+  case 5
+    sensorCov = 1^2;
+%     kentland_load_data
+%     kentland_process_scans
+    conf.map_resolution = 0.05;
+    conf.laser_reading_max = 30;
+    conf.laser_reading_min = .5;
+    
+  case 6
+    load pr2_data.mat
+    map = imread('pr2_map_0.05.png');
+    sensorCov = 0.02^2; 
+    
+  case 7
+    map = imread('intel_padded_0.05.png');
+    sensorCov = 0.02^2;
+    conf.map_resolution = 0.05; %Map resolution
+    conf.laser_reading_max = 30;
+    conf.laser_reading_min = .5;
+  
+  case 8
+    sensorCov = 0.02^2;
+    map = imread('intel_partial.png');
+    conf.map_resolution = 0.05; %Map resolution
+    conf.laser_reading_max = 30;
+    conf.laser_reading_min = .5;
+    
+  case 9
+    sensorCov = 0.02^2;
+    map = imread('intel_partial3.png');
+    conf.map_resolution = 0.05; %Map resolution
+    conf.laser_reading_max = 30;
+    conf.laser_reading_min = .5;
+        
+  case 10
+    sensorCov = 0.02^2;
+    load cas_lab_map_new.mat
+    conf.map_resolution = res;
+    map = mat;
+    conf.laser_reading_max = 5;
+    conf.laser_reading_min = 0.75;    
     
   otherwise
     error('Please select a valid dataset!');
@@ -89,6 +150,8 @@ global DT1_dy2obj;
 global DT2_dx2obj;
 global DT2_dy2obj;
 
+
+
 [DT, DtIndex] = bwdist(map, 'euclidean');
 DT = double(DT);
 [m,n] = size(DT);
@@ -104,11 +167,17 @@ for i = 1:m
                 row = m;
             end
 
-            DT1(i,j) = (col - j).*conf.map_resolution;
-            DT2(i,j) = (row - i).*conf.map_resolution;
+            DT1(i,j) = (col - j);
+            DT2(i,j) = (row - i);
         end
     end
 end
+
+[dt1_dx, dt1_dy] = gradient(DT1);
+[dt2_dx, dt2_dy] = gradient(DT2);
+
+DT1 = DT1.*conf.map_resolution;
+DT2 = DT2.*conf.map_resolution;
 
 [X1, X2] = ndgrid(conf.map_resolution:conf.map_resolution:conf.map_size(1),conf.map_resolution:conf.map_resolution:conf.map_size(2));
 
@@ -116,11 +185,9 @@ DTobj = griddedInterpolant(X1, X2, DT, 'cubic');
 DTobj1 = griddedInterpolant(X1, X2, DT1, 'cubic');
 DTobj2 = griddedInterpolant(X1, X2, DT2, 'cubic');
 
-[dt1_dx, dt1_dy] = gradient(DT1);
 DT1_dxobj = griddedInterpolant(X1, X2, dt1_dx, 'cubic');
 DT1_dyobj = griddedInterpolant(X1, X2, dt1_dy, 'cubic');
 
-[dt2_dx, dt2_dy] = gradient(DT2);
 DT2_dxobj = griddedInterpolant(X1, X2, dt2_dx, 'cubic');
 DT2_dyobj = griddedInterpolant(X1, X2, dt2_dy, 'cubic');
 
@@ -175,9 +242,10 @@ switch dataset_sel
         n_scans = size(laser_ranges', 1);
         laser = laser_ranges';
         clear odom
-        conf.start_index = 70;
+        conf.start_index = 1;
 %       40:  pose = [69 + 0.194584146142006; 69 + 0.929364144802093; 0];
-        pose = [-5.7084 + 70.2;   8.1791 + 70.2;   -0.0429];    
+%         pose = [9.9 + 70.2;   9.9 + 70.2;   -0.0429];  
+        pose = [70.2; 70.2; 0]; % iciis_1
         %pose = [69 + 14.2380; 69 + -9.2832; -0.0204];
         
     case 4
@@ -192,28 +260,95 @@ switch dataset_sel
         laser = GT_laser;
 
         odom = GT_odom(:,2:4);
-        conf.start_index = 2;
+        conf.start_index = 45;
         pose = [1220*conf.map_resolution;
             719*conf.map_resolution;
-            1.7];
-    
-    conf.sim = 0;   
+            1.6];
+        conf.sim = 1;
+        
+    case 5
+        n_scans = size(laser_ranges', 1);
+        laser = laser_ranges';
+        clear odom
+        conf.start_index = 50 ;
+%         pose = [2000*conf.map_resolution; 2000*conf.map_resolution; 0];
+        pose = gt_jfr(1,:)' + [135; 110; pi/2];
+        zoom(2)
+        
+    case 6
+        n_scans = size(laser, 1);
+        conf.start_index = 1200;
+        ang = -pi/2 : conf.laser_res : pi/2 - conf.laser_res
+        pose = [690*0.05; 540*0.05; 0];
+%         pose = [44.86; 24.54; -pi/2];
+
+    case 7
+        load intelraw_laser;
+        load intelraw_odom;
+        n_scans = size(raw_laser,1);
+        ang = [(-180/2+0.5):1:(180/2)]/180*pi;
+        laser = raw_laser;
+        odom= raw_odom;
+        conf.start_index = 10;
+        pose = [620*conf.map_resolution;
+          530*conf.map_resolution;
+          -1.7];
+        conf.sim = 0;
+%         zoom(2);
+
+    case 8
+        load intelraw_laser;
+        load intelraw_odom;
+%         n_scans = size(raw_laser,1);
+        n_scans = 100;
+        ang = [(-180/2+0.5):1:(180/2)]/180*pi;
+        laser = raw_laser;
+        odom= raw_odom;
+        conf.start_index = 10;
+        pose = [220*conf.map_resolution;
+          350*conf.map_resolution;
+          -1.57];
+        conf.sim = 0;
+        
+    case 9
+        load intelraw_laser;
+        load intelraw_odom;
+%         n_scans = size(raw_laser,1);
+        n_scans = 4920;
+        ang = [(-180/2+0.5):1:(180/2)]/180*pi;
+        laser = raw_laser;
+        odom= raw_odom;
+        conf.start_index = 4900;
+        pose = [125*conf.map_resolution;
+          30*conf.map_resolution;
+          0];
+        conf.sim = 0;
+        
+    case 10
+        load 7_sep_cas_lab.mat
+        ang = angles;
+        conf.start_index = 350;
+        pose = [7.75; 8.25; -1.2;];
+        n_scans = length(laser);
+        conf.sim = 0;
 end
 
 if type == 0
     %% Run VCD-localizer
     Pose = pose';
     cov = [];
+    
+    estimates = {};
 
     for i = conf.start_index:n_scans
-
+        i
         if conf.skip_it~=1 % Skip scans default 2 because the otherone is used to make the map
             if(mod(i,conf.skip_it)~=0)
             continue;
             end
         end
 
-        if dataset_sel == 3
+        if dataset_sel == 3 || dataset_sel == 5
             Scan_k = laser{i};
             ang = laser_bearings{i};
         else        
@@ -227,38 +362,56 @@ if type == 0
             u_k = [0.0 0.0];
         end
         
-        X_CDin = Pose(end,:) + [-u_k(1)*sin(Pose(end,3)) u_k(1)*cos(Pose(end,3)) -u_k(2)]
-        
-        if dataset_sel == 3 % For JFR dataset, use GPS to initialize
-            X_CDin = gps(i,:) + [70.2 70.2 0];
+        if isfield(conf, 'sim')&&conf.sim
+            % Add noise to the measurement
+            Scan_k = Scan_k + sqrt(sensorCov).*randn(size(Scan_k));
+            u_k(1) = u_k(1) + 0.05.*randn(size(u_k(1))); %0.04 linaer velocity noise
+            u_k(2) = u_k(2) + 0.01.*randn(size(u_k(2))); %0.01 angular velocity noise
         end
         
-        [tp_2, cov_Xr] = optimizeVCD(X_CDin', Scan_k, ang, conf); % Optimizer
-        tp_2
-        
-%         tp_2 = gt_jfr(i,:)' + [70.45 70.45 0]';
-%         tp_2 = Pose(end,:)
-%         std_Xr = sqrt(cov_Xr);
-%         [std_Xr(1,1) std_Xr(2,2) std_Xr(3,3)]
+        X_CDin = Pose(end,:) + [-u_k(1)*sin(Pose(end,3)) u_k(1)*cos(Pose(end,3)) -u_k(2)];
+%         X_CDin = Pose(end,:) + [u_k(1)*sin(Pose(end,3)) u_k(1)*cos(Pose(end,3)) u_k(2)];
 
+        if dataset_sel == 3 % For JFR dataset, use GPS to initialize
+            X_CDin = gps(i,:) + [70.2 70.2 -1.5707];
+        elseif dataset_sel == 5
+%             X_CDin = Pose(end,:);
+              X_CDin = gt_jfr(i,:) + [130 113 pi-0.6632];
+        end
+        
+%         [tp_2, cov_Xr, residual] = optimizeVCD(X_CDin', Scan_k, ang, conf); % Optimizer
+          tp_2 = optimizeVCD(X_CDin', Scan_k, ang, conf); % Optimizer
+%           tp_2 = X_CDin';
+%         tp_2 = gt_jfr(i,:) + [70.2 70.2 -1.5707];
+%         cov_Xr
+%         tp_2
+%         sqrt(cov_Xr);
+%         tp_2 = X_CDin;
         if mod(i,1)==0
               draw_laser(tp_2,[Scan_k;ang],conf,[1 0 1]);
-%           pause(1);
+%               pause(0.05)
         end
         Pose(end+1,:)= tp_2';
-        cov(i-conf.start_index+1,:,:,:) = cov_Xr;
+%         cov(end+1,:,:,:) = cov_Xr;
+        
+%         tempEstimate = {};
+%         tempEstimate.cov = cov_Xr;
+%         tempEstimate.residual = residual;
+%         
+%         estimates{end+1} = tempEstimate;
+        
     end
 else
    %% Run Monte Carlo
+   sigma = sqrt(sensorCov);
    if dataset_sel == 3
-       iterations = 1000;
-       sigma = 0.25;
+       iterations = 30000;
 
        pose10 = zeros(iterations, 3);
        pose100 = zeros(iterations, 3);
 
-       initGuess10 = gps(conf.start_index+10,:) + [70.2 70.2 0];
-       initGuess100 = gps(conf.start_index+100,:) + [70.2 70.2 0];
+       initGuess10 = gt_jfr(conf.start_index+10,:) + [70.2 70.2 0];
+       initGuess100 = gt_jfr(conf.start_index+100,:) + [70.2 70.2 0];
 
        Scan_k = laser{conf.start_index+10};
        ang = laser_bearings{conf.start_index+10};
@@ -267,15 +420,14 @@ else
            randScan = normrnd(Scan_k, sigma);
            [tp_2] = optimizeVCD(initGuess10, randScan, ang, conf); % Optimizer
            pose10(i,:) = tp_2';
-           plot(tp_2(1,1)/0.05,tp_2(1,2)/0.05, 'rx')
            [1 i]
        end
 
-       [tp_10, cov_Xr10] = optimizeVCD(initGuess10, Scan_k, ang, conf); % Optimizer
-       tp_10
-       cov_Xr10
+       poseMean10 = mean(pose10);
+       X_ort = laser_read([Scan_k; ang], conf);
+       cov_Xr10 = calcUncertainty(X_ort, poseMean10);
 
-       Scan_k = laser{conf.start_index+100};
+       Scan_k = laser{c25onf.start_index+100};
        ang = laser_bearings{conf.start_index+100};
        
        for i=1:iterations
@@ -285,39 +437,65 @@ else
            [2 i]
        end
 
-       [tp_100, cov_Xr100] = optimizeVCD(initGuess100, Scan_k, ang, conf); % Optimizer
-       tp_100
-       cov_Xr100
+       poseMean100 = mean(pose100);
+       X_ort = laser_read([Scan_k; ang], conf);
+       cov_Xr100 = calcUncertainty(X_ort, poseMean100);
    else
-       iterations = 100000;
-       sigma = 0.02;
+       iterations = 10000;
 
+       pose40 = zeros(iterations, 3);
        pose75 = zeros(iterations, 3);
        pose750 = zeros(iterations, 3);
+       pose828 = zeros(iterations, 3);
 
+       initGuess40 = [26.0919;   21.6326;   -1.5532];
        initGuess75 = [26.1926678977323; 21.6522428977820; -1.57131998766469];
        initGuess750 = [39.1852750940015; 34.8938337056028; -6.20687660689260];
+       initGuess828 = [38.8554;   39.1983;   -6.1602];
 
-       Scan_k = laser(75,:);
+       
+       Scan_k = laser(48,:);
        for i=1:iterations
            randScan = normrnd(Scan_k, sigma);
-           [tp_2] = optimizeVCD(initGuess75, randScan, ang, conf); % Optimizer
-           pose75(i,:) = tp_2';       
+           [tp_2] = optimizeVCD(initGuess40, randScan, ang, conf); % Optimizer
+           pose40(i,:) = tp_2';       
        end
 
-       [tp_75, cov_Xr75] = optimizeVCD(initGuess75, Scan_k, ang, conf); % Optimizer
-       tp_75
-       cov_Xr75
-
-       Scan_k = laser(750,:);
+       poseMean40 = mean(pose40);
+       X_ort = laser_read([Scan_k;ang],conf);
+       cov_Xr40 = calcUncertainty(X_ort, poseMean40);
+       
+       Scan_k = laser(836,:);
        for i=1:iterations
            randScan = normrnd(Scan_k, sigma);
-           [tp_2] = optimizeVCD(initGuess750, randScan, ang, conf); % Optimizer
-           pose750(i,:) = tp_2';       
+           [tp_2] = optimizeVCD(initGuess828, randScan, ang, conf); % Optimizer
+           pose828(i,:) = tp_2';       
        end
 
-       [tp_750, cov_Xr750] = optimizeVCD(initGuess750, Scan_k, ang, conf); % Optimizer
-       tp_750
-       cov_Xr750
+       poseMean828 = mean(pose828);
+       X_ort = laser_read([Scan_k;ang],conf);
+       cov_Xr828 = calcUncertainty(X_ort, poseMean828);
+       
+%        Scan_k = laser(75,:);
+%        for i=1:iterations
+%            randScan = normrnd(Scan_k, sigma);
+%            [tp_2] = optimizeVCD(initGuess75, randScan, ang, conf); % Optimizer
+%            pose75(i,:) = tp_2';       
+%        end
+% 
+%        [tp_75, cov_Xr75] = optimizeVCD(initGuess75, Scan_k, ang, conf); % Optimizer
+%        tp_75
+%        cov_Xr75
+% 
+%        Scan_k = laser(750,:);
+%        for i=1:iterations
+%            randScan = normrnd(Scan_k, sigma);
+%            [tp_2] = optimizeVCD(initGuess750, randScan, ang, conf); % Optimizer
+%            pose750(i,:) = tp_2';       
+%        end
+% 
+%        [tp_750, cov_Xr750] = optimizeVCD(initGuess750, Scan_k, ang, conf); % Optimizer
+%        tp_750
+%        cov_Xr750
    end
 end

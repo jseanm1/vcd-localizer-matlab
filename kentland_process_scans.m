@@ -1,5 +1,4 @@
-% camera_f = 10.0;
-camera_f = 88.0;
+camera_f = 31.0;
 
 mapParams.resolution = 0.05;
 mapParams.xoffset = 0;
@@ -14,10 +13,10 @@ laser_ranges = {};
 laser_bearings = {};
 
 pose = {};
-angles = []
+angles = [];
 for i = 1:m
-    pose.x = scanPoseMsgs{i}.Pose.Pose.Pose.Position.X;
-    pose.y = (-scanPoseMsgs{i}.Pose.Pose.Pose.Position.Y);
+    pose.x = -scanPoseMsgs{i}.Pose.Pose.Pose.Position.Y;
+    pose.y = -(scanPoseMsgs{i}.Pose.Pose.Pose.Position.X);
     pose.z = scanPoseMsgs{i}.Pose.Pose.Pose.Position.Z;
     orientation = scanPoseMsgs{i}.Pose.Pose.Pose.Orientation;
     eul = quat2eul([orientation.W, orientation.X, orientation.Y, orientation.Z]);
@@ -58,15 +57,15 @@ for i = 1:m
     laser_bearings{i} = tmp_bearings;
 end
 
-figure
-hold on
-plot(angles(:,1), '-r')
-plot(angles(:,2), '-g')
-plot(angles(:,3), '-b')
+% figure
+% hold on
+% plot(angles(:,1), '-r')
+% plot(angles(:,2), '-g')
+% plot(angles(:,3), '-b')
 
 gps = zeros(m,3);
-gps(:,1:2) = normrnd(gt_jfr(:,1:2), 0.25);
-gps(:,3) = normrnd(gt_jfr(:,3),0.02);
+% gps(:,1:2) = normrnd(gt_jfr(:,1:2), 0.25);
+% gps(:,3) = normrnd(gt_jfr(:,3),0.02);
 
 function[x] = GXWX(mapParams, x)
 x = floor(((x - mapParams.xoffset)) + 0.5);

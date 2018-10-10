@@ -1,8 +1,8 @@
 function [] = drawCircle()
 clear all;
-r = 5000;
-c = 5000;
-resolution = 0.1;
+r = 10000;
+c = 10000;
+resolution = 0.2;
 map = zeros(r,c,3);
 map = uint8(map);
 
@@ -38,7 +38,7 @@ end
 mapRz = imresize(map, resolution);
 
 % Rotate for kentland angle
-mapRt = imrotate(mapRz, -58, 'bicubic');
+mapRt = imrotate(mapRz, -52.0016, 'bicubic');
 
 [r,c,d] = size(mapRt);
 % Set black to green and gray to black
@@ -58,8 +58,8 @@ imwrite(mapRt, 'jfr_circle.png');
 end
 
 function [u,v,wp, hp] = convertToPx(x,y,w,h)
-    u = 200 * (x - w/2) + 2500;
-    v = -200 * (y + h/2) + 2500;
+    u = 200 * (x - w/2) + 5000;
+    v = -200 * (y + h/2) + 5000;
     
     wp = 200 * w;
     hp = 200 * h;

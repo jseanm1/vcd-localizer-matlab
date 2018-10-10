@@ -132,26 +132,26 @@ map = shapeInserter(map, rectangle);
 % rectangle = int32([u,v,wp,hp]);
 % map = shapeInserter(map, rectangle);
 % 
+% 
+% [u,v,wp,hp] = convertToPx(7.5, -22.22, 5, 0.5);
+% rectangle = int32([u,v,wp,hp]);
+% map = shapeInserter(map, rectangle);
+% 
+% [u,v,wp,hp] = convertToPx(17.5, -30, 5, 0.5);
+% rectangle = int32([u,v,wp,hp]);
+% map = shapeInserter(map, rectangle);
+% 
+% [u,v,wp,hp] = convertToPx(15, -30, 0.5, 10);
+% rectangle = int32([u,v,wp,hp]);
+% map = shapeInserter(map, rectangle);
 
-[u,v,wp,hp] = convertToPx(7.5, -22.22, 5, 0.5);
-rectangle = int32([u,v,wp,hp]);
-map = shapeInserter(map, rectangle);
-
-[u,v,wp,hp] = convertToPx(17.5, -30, 5, 0.5);
-rectangle = int32([u,v,wp,hp]);
-map = shapeInserter(map, rectangle);
-
-[u,v,wp,hp] = convertToPx(15, -30, 0.5, 10);
-rectangle = int32([u,v,wp,hp]);
-map = shapeInserter(map, rectangle);
-
-release(shapeInserter);
-red = double([255 0 0]);
-% set(shapeInserter,'Shape','Circles','Fill', true, 'FillColor', 'Black');
-shapeInserter = vision.ShapeInserter('Shape','Circles', 'Fill', true, 'FillColor', 'Custom', 'CustomFillColor', red);
-[u,v,wp,hp] = convertToPx(20, -35, 10, 10);
-circle = int32([u,v,wp/2.0]);
-map = shapeInserter(map, circle);
+% release(shapeInserter);
+% red = double([255 0 0]);
+% % set(shapeInserter,'Shape','Circles','Fill', true, 'FillColor', 'Black');
+% shapeInserter = vision.ShapeInserter('Shape','Circles', 'Fill', true, 'FillColor', 'Custom', 'CustomFillColor', red);
+% [u,v,wp,hp] = convertToPx(20, -35, 10, 10);
+% circle = int32([u,v,wp/2.0]);
+% map = shapeInserter(map, circle);
 
 % Resize to desired resolution
 mapRz = imresize(map, resolution);
@@ -172,7 +172,7 @@ for i=1:r
 end
 
 imshow(mapRt);
-imwrite(mapRt, 'jfr_kentland.png');
+imwrite(mapRt, 'jfr_kentland_track.png');
 end
 
 function [u,v,wp, hp] = convertToPx(x,y,w,h)
