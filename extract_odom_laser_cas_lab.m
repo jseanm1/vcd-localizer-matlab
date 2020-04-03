@@ -1,7 +1,8 @@
 clear
 clc
 
-bag = rosbag('/home/janindu/data/ICRA_2019/7Sep18/cas_lab_mapping/cas_lab_localize_2018-09-07-02-15-22.bag');
+% bag = rosbag('/home/janindu/data/ICRA_2019/7Sep18/cas_lab_mapping/cas_lab_localize_2018-09-07-02-15-22.bag');
+bag = rosbag('/home/janindu/data/ICRA_2019/cas_lab_mapping/icra_mapping_1.bag');
 
 odomBag = select(bag, 'Topic', '/odom');
 odomMsgs = readMessages(odomBag);
@@ -43,4 +44,5 @@ angles = laserMsgs{1}.AngleMax:-1*laserMsgs{1}.AngleIncrement:laserMsgs{1}.Angle
 time = laser(:,1);
 laser = laser(:,2:end);
 
-save('7_sep_cas_lab.mat', 'laser', 'odom', 'angles', 'time');
+% save('7_sep_cas_lab.mat', 'laser', 'odom', 'angles', 'time');
+save('icra_mapping_1_2018.mat', 'laser', 'odom', 'angles', 'time');

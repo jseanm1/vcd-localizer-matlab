@@ -24,8 +24,15 @@ function draw_laser(X_h,laser_scan, conf, mcolor)
     X_h(2) = X_h(2) / conf.map_resolution;
 
     X_oi_bp=zeros(2,length(laser_scan));
-    X_oi_bp(1,:)= X_h(1) +laser_scan(1,:).*sin(laser_scan(2,:) -  X_h(3) );
-    X_oi_bp(2,:)= X_h(2) +laser_scan(1,:).*cos(laser_scan(2,:) -  X_h(3) );
+    
+    for i=1:length(laser_scan)
+        if laser_scan(1,i) < conf.laser_reading_max / conf.map_resolution
+            X_oi_bp(1,i)= X_h(1) +laser_scan(1,i).*sin(laser_scan(2,i) -  X_h(3) );
+            X_oi_bp(2,i)= X_h(2) +laser_scan(1,i).*cos(laser_scan(2,i) -  X_h(3) );
+        end
+    end
+    
+    
 
     %Draw Robot
     %set(robothan,'Visible', 'off');

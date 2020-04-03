@@ -29,6 +29,8 @@ function [cov_Xr] = calcUncertainty(X_ort, X_opt)
     H(3,1) = H(1,3);
     H(3,2) = H(2,3);
 
+    H = H./sqrt(n);
+    
     % Set A
     A(1,:) = getd2vcd_dxrdr(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, DT1_dx2obj, DT2_dx2obj, X_ort, X_opt, X_o, n);
     A(2,:) = getd2vcd_dyrdr(DTobj1, DTobj2, DT1_dxobj, DT1_dyobj, DT2_dxobj, DT2_dyobj, DT1_dy2obj, DT2_dy2obj, X_ort, X_opt, X_o, n);

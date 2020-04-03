@@ -5,7 +5,7 @@ type = 0;
 % 0. Localizer
 % 1. Monte Carlo
 
-dataset_sel = 10;
+dataset_sel = 4
 % 1. CAS dataset
 % 2. Intel Dataset
 % 3. JFR Simulations
@@ -15,7 +15,9 @@ dataset_sel = 10;
 % 7. Intel Padded
 % 8. Intel partial1
 % 9. Intel partial3
-% 10. CAS LAB 404
+% 10. CAS LAB 7 sept 18
+% 11  CAS LAB mapping
+% 12 Freiburg Map A 2
 
 %% Load Map
 global map;
@@ -62,18 +64,18 @@ switch dataset_sel
     conf.laser_reading_min = .5;
     
   case 4
-    sensorCov = 0.2^2;
+    sensorCov = 0.02^2;
     map_final = imread('hospital_section_l.png');
     map = imcomplement(im2bw(map_final));
-    conf.laser_reading_max = 4.8;
-    conf.laser_reading_min = .1;
+    conf.laser_reading_max = 29.0;
+    conf.laser_reading_min = 0.1;
     load hospital_test4_02_ws
     conf.map_resolution = 0.05; %Map resolution
     
   case 5
     sensorCov = 1^2;
-%     kentland_load_data
-%     kentland_process_scans
+    kentland_load_data
+    kentland_process_scans
     conf.map_resolution = 0.05;
     conf.laser_reading_max = 30;
     conf.laser_reading_min = .5;
@@ -110,7 +112,24 @@ switch dataset_sel
     conf.map_resolution = res;
     map = mat;
     conf.laser_reading_max = 5;
-    conf.laser_reading_min = 0.75;    
+    conf.laser_reading_min = 0.75; 
+    
+  case 11
+    sensorCov = 0.02^2;
+    load cas_lab_map_new.mat
+    conf.map_resolution = res;
+    map = mat;
+    conf.laser_reading_max = 5;
+    conf.laser_reading_min = 0.75;
+    
+    case 12
+        sensorCov = 0.02^2;
+        load freiburg_map.mat
+        map = imcomplement(map);
+        conf.map_resolution = 0.05;
+        conf.laser_reading_max = 30;
+        conf.laser_reading_min = 01;
+        conf.map_size = size(map).*conf.map_resolution;
     
   otherwise
     error('Please select a valid dataset!');
@@ -211,7 +230,7 @@ figure(11);
 lasermap=subplot(1,1,1);
 imshow(imcomplement(map));
 hold on
-%% Load Datasets
+% %% Load Datasets
 switch dataset_sel
     case 1
         load CAS_dataset_ppl
@@ -229,7 +248,7 @@ switch dataset_sel
         load intelraw_odom;
         n_scans = size(raw_laser,1);
         ang = [(-180/2+0.5):1:(180/2)]/180*pi;
-        laser = raw_laser;
+        laser = raw_laser + 0.01*randn(size(raw_laser));
         odom= raw_odom;
         conf.start_index = 10;
         pose = [520*conf.map_resolution;
@@ -327,10 +346,26 @@ switch dataset_sel
     case 10
         load 7_sep_cas_lab.mat
         ang = angles;
-        conf.start_index = 350;
+        conf.start_index = 2;
         pose = [7.75; 8.25; -1.2;];
         n_scans = length(laser);
         conf.sim = 0;
+        
+    case 11
+        load icra_mapping_1_2018.mat
+        ang = angles;
+        conf.start_index = 2;
+        pose = [8.0; 9.5; -1.2;];
+        n_scans = length(laser);
+        conf.sim = 0;
+        
+    case 12
+        load freiburg_A_cloudy_2.mat
+        ang = [-pi/2:pi/180:pi/2];
+        conf.start_index = 260;
+        pose = [12.25; 15.0; 3.0107];
+        n_scans = length(laser);
+        laser = laser(:,2:end);
 end
 
 if type == 0
@@ -340,7 +375,7 @@ if type == 0
     
     estimates = {};
 
-    for i = conf.start_index:n_scans
+    for i = conf.start_index:conf.skip_it:n_scans
         i
         if conf.skip_it~=1 % Skip scans default 2 because the otherone is used to make the map
             if(mod(i,conf.skip_it)~=0)
@@ -365,8 +400,8 @@ if type == 0
         if isfield(conf, 'sim')&&conf.sim
             % Add noise to the measurement
             Scan_k = Scan_k + sqrt(sensorCov).*randn(size(Scan_k));
-            u_k(1) = u_k(1) + 0.05.*randn(size(u_k(1))); %0.04 linaer velocity noise
-            u_k(2) = u_k(2) + 0.01.*randn(size(u_k(2))); %0.01 angular velocity noise
+            u_k(1) = u_k(1) + 0.04.*randn(size(u_k(1))); %0.04 linaer velocity noise
+            u_k(2) = u_k(2) + 0.000001.*randn(size(u_k(2))); %0.01 angular velocity noise
         end
         
         X_CDin = Pose(end,:) + [-u_k(1)*sin(Pose(end,3)) u_k(1)*cos(Pose(end,3)) -u_k(2)];
@@ -381,15 +416,13 @@ if type == 0
         
 %         [tp_2, cov_Xr, residual] = optimizeVCD(X_CDin', Scan_k, ang, conf); % Optimizer
           tp_2 = optimizeVCD(X_CDin', Scan_k, ang, conf); % Optimizer
-%           tp_2 = X_CDin';
 %         tp_2 = gt_jfr(i,:) + [70.2 70.2 -1.5707];
 %         cov_Xr
 %         tp_2
-%         sqrt(cov_Xr);
-%         tp_2 = X_CDin;
+%         2*sqrt(cov_Xr)
+%         tp_2 = X_CDin';
         if mod(i,1)==0
-              draw_laser(tp_2,[Scan_k;ang],conf,[1 0 1]);
-%               pause(0.05)
+            draw_laser(tp_2,[Scan_k;ang],conf,[1 0 1]);
         end
         Pose(end+1,:)= tp_2';
 %         cov(end+1,:,:,:) = cov_Xr;
@@ -399,7 +432,7 @@ if type == 0
 %         tempEstimate.residual = residual;
 %         
 %         estimates{end+1} = tempEstimate;
-        
+       
     end
 else
    %% Run Monte Carlo
